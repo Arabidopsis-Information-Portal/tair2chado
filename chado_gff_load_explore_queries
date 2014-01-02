@@ -1,0 +1,60 @@
+#shows type UTR is defined in sequence ontology
+select d.name, d.description from cvterm cv, dbxref dbx, db d where cv.dbxref_id = dbx.dbxref_id and dbx.db_id = d.db_id and cv.name = 'UTR';
+
+#shows type gene is defined in sequence ontology
+select d.name, d.description from cvterm cv, dbxref dbx, db d where cv.dbxref_id = dbx.dbxref_id and dbx.db_id = d.db_id and cv.name = 'gene';
+
+
+
+#NOTE ALL DATA ARE IN TRIPLICATE (3 experimental loads)
+
+#find all features of gene with id 'ATCG00010' (a tRNA gene)
+select feature_id, f.name, f.uniquename, c.name, c.definition from feature as f, cvterm as c where f.name like '%ATCG00010%' and type_id = cvterm_id;
+
+#same query but for another gene
+#has only 'gene' and 'exon' cvterm
+select feature_id, f.name, f.uniquename, c.name, c.definition from feature as f, cvterm as c where f.name like '%ATCG00210%' and type_id = cvterm_id;
+
+
+
+#SOME summary statistics on what has been loaded
+
+aip=# select count(feature_id) from feature as f, cvterm as c where type_id = cvterm_id and c.name = 'exon';
+count 
+-------
+471
+
+aip=# select count(feature_id) from feature as f, cvterm as c where type_id = cvterm_id and c.name like '%RNA';
+count 
+-------
+399
+
+aip=# select count(feature_id) from feature as f, cvterm as c where type_id = cvterm_id and c.name like '%gene%';
+count 
+-------
+399
+(1 row)
+
+aip=# select count(feature_id) from feature as f, cvterm as c where type_id = cvterm_id and c.name like '%CDS%';
+count 
+-------
+0
+(1 row)
+
+aip=# select count(feature_id) from feature as f, cvterm as c where type_id = cvterm_id and c.name like '%cds%';
+count 
+-------
+0
+(1 row)
+
+aip=# select count(feature_id) from feature as f, cvterm as c where type_id = cvterm_id and c.name like '%pro%';
+count 
+-------
+0
+(1 row)
+
+aip=# select count(feature_id) from feature as f, cvterm as c where type_id = cvterm_id and c.name like '%UTR%';
+count 
+-------
+0
+(1 row)
