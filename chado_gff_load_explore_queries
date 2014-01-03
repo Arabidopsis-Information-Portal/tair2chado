@@ -58,3 +58,13 @@ count
 -------
 0
 (1 row)
+
+
+
+#find the type_id to link with the cvterm table when uploading protein data
+select * from cvterm cv, dbxref dbx, db d where cv.dbxref_id = dbx.dbxref_id and dbx.db_id = d.db_id and cv.definition like 'A sequence of amino acids linked%' and d.name ='SO';
+
+#and here is where we wanted to get:
+ select * from cvterm where cvterm_id = 40536;
+  cvterm_id | cv_id |    name     |                                                                     definition                                                                      | dbxref_id | is_obsolete | is_relationshiptype 
+       40536 |    16 | polypeptide | A sequence of amino acids linked by peptide bonds which may lack appreciable tertiary structure and may not be liable to irreversible denaturation. |     94547 |           0 |                   0

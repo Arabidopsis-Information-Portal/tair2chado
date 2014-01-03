@@ -1,0 +1,58 @@
+#see JIRA screenshot on how to save output of those queries via DBvisualizer
+select * from aip_dw.dw_proteinmodel;
+select * from aip_dw.dw_reference;
+
+#uploading data from dw_proteinmodel, will need to be split up between feature and featureprop in CHADO
+#the featureprop allows for saving additional data about a feature (protein in this specific case)
+#here are the original columns from dw_proteinmodel table of TAIR:
+GENEMODELNAME   LOCUSTAIROBJECTID       SEQUENCETAIROBJECTID    LENGTH  MOLECULARWEIGHT ISOELECTRICPOINT
+
+#and here are how they will be mapped in CHADO, lower case in parenthesis designates the columns names of 
+#feature table from CHADO. Note that lower case without paranthesis are the additional columns we add in
+#order to link to keys that exist in gff pre-loaded tables in CHADO
+#organism_id links to the organism table (single entry with id 1 for A.thaliana) and type_id links to SO protein ( SO:0000104 or  SO:0000358)
+organism_id GENEMODELNAME(name) LOCUSTAIROBJECTID(uniquename) type_id
+
+#here is how we split the table dw_proteinmodel
+cut -f 1,2  DW_PROTEINMODEL  | sed -e "2,$ s/^/1   /" | sed -e "s/$/       40536/" | sort -u  >> DW_PROTEINMODEL_PART1
+
+
+#before the split
+~/Documents/Google Drive/Devel/tair2chado]> head DW_PROTEINMODEL
+GENEMODELNAME   LOCUSTAIROBJECTID       SEQUENCETAIROBJECTID    LENGTH  MOLECULARWEIGHT ISOELECTRICPOINT
+AT1G13550.1     2009962 4010743389      388     45002.1 6.5128
+AT1G13500.1     2009972 1009105590      386     44243   5.3995
+AT1G13540.1     2009977 1009105581      381     43905.6 5.7513
+AT1G13510.1     2009987 1009105585      380     43737.6 6.0982
+AT1G13630.1     2009997 5019480016      806     91201.9 7.3477
+
+#after the split
+~/Documents/Google Drive/Devel/tair2chado]> head DW_PROTEINMODEL_PART1 
+organism_id GENEMODELNAME(name) LOCUSTAIROBJECTID(uniquename) type_id
+1       AT1G13550.1     2009962 40536
+1       AT1G13500.1     2009972 40536
+1       AT1G13540.1     2009977 40536
+1       AT1G13510.1     2009987 40536
+1       AT1G13630.1     2009997 40536
+1       AT1G13520.1     2010002 40536
+1       AT1G13530.1     2010017 40536
+
+
+#load data into feature table of CHADO (command from inside the psql prompt)
+aip=# copy feature (organism_id,name,uniquename,type_id) from '/home/ubuntu/sample_data/DW_PROTEINMODEL_PART1';
+
+#!!!!!!!
+ERROR:  duplicate key value violates unique constraint "feature_c1"
+DETAIL:  Key (organism_id, uniquename, type_id)=(1, 2200940, 40536) already exists.
+CONTEXT:  COPY feature, line 5229: "1   AT1G01020.2     2200940 40536"
+
+#this table has index
+"feature_c1" UNIQUE CONSTRAINT, btree (organism_id, uniquename, type_id)
+
+#and in the file we can find
+ubuntu@gmodinabox:~/sources/chado-1.23$ grep 2200940  ~/sample_data/DW_PROTEINMODEL_PART1 
+1       AT1G01020.1     2200940 40536
+1       AT1G01020.2     2200940 40536
+
+#we deleted all data from the table - thus the index should be emptied as well
+# or is it because we have 2 out of 3 fields the same and the composite index fails ?
